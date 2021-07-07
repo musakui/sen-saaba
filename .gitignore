@@ -1,0 +1,5 @@
+.env
+.password
+.valid.json
+dist/
+node_modules/

@@ -1,0 +1,127 @@
+{
+  "name": "default",
+  "current_scene": "main",
+  "scene_order": [{"name":"main"},{"name":"brb"}],
+  "sources": [
+    {
+      "name": "BRB", "enabled": true, "id": "text_ft2_source",
+      "muted": false, "volume": 1, "balance": 0.5,
+      "settings": { "text": "BRB" }
+    },
+    {
+      "name": "brb", "enabled": true, "id": "scene",
+      "muted": false, "volume": 1, "balance": 0.5,
+      "settings": {
+        "id_counter": 1, "custom_size": false,
+        "items": [
+          {
+            "name": "BRB", "id": 1,
+            "locked": false, "visible": true,
+            "pos": { "x": 695, "y": 412 },
+            "scale": { "x": 1, "y": 1 },
+            "rot": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "time", "enabled": true, "id": "browser_source",
+      "muted": false, "volume": 1, "balance": 0.5, "mixers": 255,
+      "filters": [
+        {
+          "name": "Crop/Pad", "enabled": true, "id": "crop_filter",
+          "settings": { "bottom": 310, "top": 80 }
+        }
+      ],
+      "settings": {
+        "url": "https://time.is/Tokyo",
+        "restart_when_active": false
+      }
+    },
+    {
+      "name": "main", "enabled": true, "id": "scene",
+      "muted": false, "volume": 1, "balance": 0.5,
+      "settings": {
+        "id_counter": 6,
+        "items": [
+          {
+            "name": "ComfyJazz", "id": 6,
+            "locked": true, "visible": true,
+            "pos": { "x": 50, "y": 800 },
+            "scale": { "x": 1, "y": 1 },
+            "rot": 0
+          },
+          {
+            "name": "srt-test", "id": 4,
+            "locked": false, "visible": true,
+            "pos": { "x": 0, "y": 0 },
+            "scale": { "x": 1, "y": 1 },
+            "rot": 0
+          },
+          {
+            "name": "text-test", "id": 2,
+            "locked": false, "visible": true,
+            "pos": { "x": 340, "y": 400 },
+            "scale": { "x": 1, "y": 1 },
+            "rot": 0
+          },
+          {
+            "name": "time", "id": 5,
+            "locked": true, "visible": true,
+            "pos": { "x": 1420, "y": 20 },
+            "scale": { "x": 0.6, "y": 0.6 },
+            "rot": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "text-test", "enabled": true, "id": "text_ft2_source",
+      "filters": [
+        {
+          "name": "marquee", "enabled": true, "id": "scroll_filter",
+          "settings": { "limit_cx": false, "limit_cy": false, "speed_x": 50 }
+        }
+      ],
+      "settings": {
+        "log_lines": 6,
+        "outline": true,
+        "text": "test    ",
+        "word_wrap": false,
+        "drop_shadow": true,
+        "antialiasing": true,
+        "color1": 4294967295,
+        "color2": 4294967295,
+        "font": {
+          "flags": 0,
+          "size": 256,
+          "style": "Book",
+          "face": "DejaVu Sans Mono"
+        }
+      }
+    },
+    {
+      "name": "srt-test", "enabled": true, "id": "ffmpeg_source",
+      "muted": false, "volume": 1, "balance": 0.5, "mixers": 255,
+      "settings": {
+        "buffering_mb": 1,
+        "is_local_file": false,
+        "input_format": "mpegts",
+        "reconnect_delay_sec": 1,
+        "restart_on_activate": true,
+        "clear_on_media_end": false,
+        "input": "udp://127.0.0.1:1936"
+      }
+    },
+    {
+      "name": "ComfyJazz", "enabled": true, "id": "browser_source",
+      "muted": false, "volume": 0.05, "balance": 0.5, "mixers": 255,
+      "settings": {
+        "reroute_audio": true,
+        "width": 500, "height": 200,
+        "shutdown": true, "restart_when_active": true,
+        "url": "https://instafluff.tv/ComfyJazz/"
+      }
+    }
+  ]
+}
