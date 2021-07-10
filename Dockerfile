@@ -53,12 +53,14 @@ ARG OBS_PPA_KEY=F425E228
 
 ARG OWS_VER=4.9.1
 
-ENV DEBIAN_FRONTEND noninteractive
+ARG DEBIAN_FRONTEND=noninteractive
 
 # CORE
+
+# gnupg for apt-key
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
-   curl ca-certificates gnupg nginx \
+      curl ca-certificates gnupg nginx \
  && rm -rf /var/lib/apt/lists/* /var/cache/apt/*
 
 # OBS
@@ -67,10 +69,12 @@ RUN apt-get update \
 RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys ${OBS_PPA_KEY}
 RUN echo "deb http://ppa.launchpad.net/${OBS_PPA}/ubuntu focal main" > /etc/apt/sources.list.d/obs.list
 
+# libxtst6, liblzo2 for x11vnc
+# qt5-image-formats-plugins for obs-websocket
 RUN apt-get update \
  && apt-get install -y --no-install-recommends \
-   xvfb ffmpeg obs-studio qt5-image-formats-plugins \
-   libxtst6 liblzo2-2 \
+      xvfb ffmpeg obs-studio qt5-image-formats-plugins \
+      libxtst6 liblzo2-2 \
  && rm -rf /var/lib/apt/lists/* /var/cache/apt/*
 
 RUN curl -sLo /ows.deb https://github.com/Palakis/obs-websocket/releases/download/${OWS_VER}/obs-websocket_${OWS_VER}-1_amd64.deb \
@@ -84,7 +88,7 @@ COPY --from=buildvnc /usr/local/bin/x11vnc /usr/bin/vnc
 COPY docker/etc /etc
 COPY docker/obs-studio /root/.config/obs-studio
 COPY docker/startup.sh /
-COPY dist/saaba-backend /usr/bin/saaba
+COPY dist/saaba-docker /usr/bin/saaba
 
 WORKDIR /root
 ENV DISPLAY :1

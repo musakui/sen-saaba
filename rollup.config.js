@@ -28,6 +28,15 @@ export default {
         'utf-8-validate',
       ],
     }),
-    terser(),
+    terser({
+      ecma: 2015,
+      compress: {
+        toplevel: true,
+        unsafe_math: true,
+      },
+      format: {
+        comments: false,
+      },
+    }),
   ],
 }

@@ -1,30 +1,24 @@
-import { run } from './utils.js'
+import { log, run } from './utils.js'
 
 const defaultArgs = ['-noxdamage']
 
-export class VNC {
-  constructor () {
-    this._proc = null
-  }
+let proc = null
 
-  async start (opts = {}) {
-    if (this._proc) return
-    const args = opts.args || defaultArgs
-    const proc = await run('vnc', ['-rfbauth', '.vncpass', ...args])
-    console.info('[VNC] Started')
-    proc.on('exit', () => {
-      console.info('[VNC] Stopped')
-      this._proc = null
-    })
-    this._proc = proc
-  }
+export const start = async (opts = {}) => {
+  if (proc) return
+  const args = opts.args || defaultArgs
+  proc = await run('vnc', ['-rfbauth', '.vncpass', ...args])
+  log('[VNC] Started')
+  proc.on('exit', () => {
+    log('[VNC] Stopped')
+    proc = null
+  })
+}
 
-  async stop () {
-    if (!this._proc) return
-    this._proc.kill()
-  }
+export const stop = () => proc?.kill()
 
+export const info = {
   get running () {
-    return !!this._proc
-  }
+    return !!proc
+  },
 }

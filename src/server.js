@@ -1,12 +1,9 @@
-import { OBS } from './obs.js'
-import { SRT } from './srt.js'
-import { VNC } from './vnc.js'
+import * as obs from './obs.js'
+import * as vnc from './vnc.js'
 
-import { password } from './utils.js'
+import { log, password } from './utils.js'
 
-const obs = new OBS()
-const srt = new SRT()
-const vnc = new VNC()
+obs.launch()
 
 const version = process.env.VERSION || 'debug'
 
@@ -33,6 +30,7 @@ export const handler = async (req) => {
         }
       }
       break
+    /*
     case '/srt':
       if (method === 'POST') {
         const { src, dst } = await body()
@@ -42,6 +40,7 @@ export const handler = async (req) => {
         await srt.start(src, dst)
       }
       return { stats: srt.stats }
+    */
     case '/vnc':
       if (method === 'POST') {
         try {
@@ -50,18 +49,18 @@ export const handler = async (req) => {
           return { error: 'could not start vnc' }
         }
       }
-      return { running: vnc.running }
+      return { running: vnc.info.running }
       break
     default:
-      console.info('[S] unknown', [method, url])
+      log('[S] unknown', [method, url])
   }
   throw new NotFoundError(`${url} does not exist`)
 }
 
 export const wsHandler = async (ws) => {
-  console.info('[WS] client connected')
+  log('[WS] client connected')
   ws.on('message', async (msg) => {
-    console.info('[WS] client:', msg)
+    log('[WS] client:', msg)
   })
 }
 

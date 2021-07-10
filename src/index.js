@@ -2,6 +2,7 @@ import { createServer } from 'http'
 
 import WS from 'ws'
 
+import { log } from './utils.js'
 import { handler, wsHandler } from './server.js'
 
 const srvErr = { error: 'Error', message: 'something went wrong' }
@@ -43,9 +44,9 @@ const wsServer = new WS.Server({ server })
 wsServer.on('connection', wsHandler)
 
 process.on('SIGINT', () => {
-  console.info('\n[S] shutting down...')
+  log('\n[S] shutting down...')
   process.exit(0)
 })
 
 const port = parseInt(process.env.PORT) || 3000
-server.listen(port, () => console.info('[S] ready'))
+server.listen(port, () => log('[S] ready'))

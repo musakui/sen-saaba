@@ -4,17 +4,6 @@ if [ -z "$AUTH_TOKEN" ]; then
   exit 1
 fi
 
-echo -n "[INIT] verifying token "
-if [ -n "${AUTH_SERVICE}" ]; then
-  echo -n "(${AUTH_SERVICE}) ..."
-  # do other verification
-else
-  echo -n "(twitch) ..."
-  curl -fs "https://id.twitch.tv/oauth2/validate" \
-    -H "Authorization: Bearer ${AUTH_TOKEN}" -o .valid.json
-fi
-echo " OK"
-
 echo -n "[INIT] writing files "
 
 function auth_hash () {

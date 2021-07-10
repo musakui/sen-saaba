@@ -2,6 +2,8 @@ import http from 'https'
 import { spawn } from 'child_process'
 import { readFile as read } from 'fs/promises'
 
+export const log = (msg) => console.info(msg)
+
 export const readFile = (fn) => read(fn, 'utf8').then((t) => t.trim())
 
 export const millis = (m) => new Promise((resolve) => setTimeout(resolve, m))
