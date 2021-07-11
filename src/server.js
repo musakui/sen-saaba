@@ -1,4 +1,5 @@
 import * as obs from './obs.js'
+import * as srt from './srt.js'
 import * as vnc from './vnc.js'
 
 import { log, password } from './utils.js'
@@ -30,17 +31,19 @@ export const handler = async (req) => {
         }
       }
       break
-    /*
     case '/srt':
       if (method === 'POST') {
         const { src, dst } = await body()
-        if (!src || !dst) {
-          throw new BadRequestError('src & dst required')
+        let proc
+        try {
+          proc = await srt.create(src, dst)
+        } catch (err) {
+          throw new BadRequestError(err.message)
         }
-        await srt.start(src, dst)
+        return srt.info.get(proc.pid)
+      } else if (method === 'DELETE') {
       }
-      return { stats: srt.stats }
-    */
+      return Object.fromEntries(srt.info.entries())
     case '/vnc':
       if (method === 'POST') {
         try {
