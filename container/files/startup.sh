@@ -14,23 +14,17 @@ sed -i "s/%AUTH_TOKEN%/${AUTH_TOKEN}/" /etc/nginx/sites-enabled/default
 sed -i "s|worker_processes .*|worker_processes ${NGINX_WORKERS:-1};|" /etc/nginx/nginx.conf
 echo -n "."
 
-PASSWORD="$(openssl rand -base64 12)"
-echo -n "${PASSWORD}" > .password
-chmod 400 .password
-echo -n "."
-
-vnc -storepasswd "${PASSWORD}" .vncpass 2>/dev/null
+vnc -storepasswd "${AUTH_TOKEN}" .vncpass 2>/dev/null
 chmod 400 .vncpass
 echo -n "."
 
 OBS_CONFIG=/root/.config/obs-studio/basic/profiles/default/basic.ini
 WS_SALT="$(auth_hash ${RANDOM})"
 echo "AuthSalt=${WS_SALT}" >> $OBS_CONFIG
-echo "AuthSecret=$(auth_hash "${PASSWORD}${WS_SALT}")" >> $OBS_CONFIG
+echo "AuthSecret=$(auth_hash "${AUTH_TOKEN}${WS_SALT}")" >> $OBS_CONFIG
 echo -n "."
 
 unset WS_SALT
-unset PASSWORD
 
 if [ -n "$CERT_URL" ]; then
   FULC="$(echo | openssl s_client -showcerts -verify 5 -connect "${CERT_URL}:443" 2>/dev/null)"

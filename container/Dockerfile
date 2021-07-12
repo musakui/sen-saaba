@@ -85,16 +85,16 @@ COPY --from=buildsrt /tmp/srt/srt-live-transmit /usr/bin/slt
 COPY --from=buildvnc /tmp/build/libvnc* /usr/lib/x86_64-linux-gnu/
 COPY --from=buildvnc /usr/local/bin/x11vnc /usr/bin/vnc
 
-COPY docker/etc /etc
-COPY docker/obs-studio /root/.config/obs-studio
-COPY docker/startup.sh /
+COPY files/etc /etc
+COPY files/obs-studio /root/.config/obs-studio
+COPY files/startup.sh /
 COPY dist/saaba-docker /usr/bin/saaba
 
 WORKDIR /root
 ENV DISPLAY :1
 
 EXPOSE 80
-EXPOSE 1935/udp
+EXPOSE 1900-1999/udp
 
 HEALTHCHECK --interval=60s CMD curl -f http://localhost/
 

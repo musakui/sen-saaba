@@ -3,7 +3,7 @@ import { createHash } from 'crypto'
 
 import WS from 'ws'
 
-import { log, run, millis, password, readFile } from './utils.js'
+import { log, run, millis, readFile } from './utils.js'
 
 const camel = ([k, v]) => [k.replace(/-./g, (c) => c[1].toUpperCase()), v]
 
@@ -39,12 +39,13 @@ export const setSceneColle = async (data = null) => {
   if (data === null) {
     await writeFile(sceneColleFile, defaultSceneColle)
     kill()
-    return
+    return { message: 'scene collection reset' }
   }
   // validate ?
   data.name = 'default'
   await writeFile(sceneColleFile, JSON.stringify(data))
   kill()
+  return { message: 'scene collection updated' }
 }
 
 
@@ -64,6 +65,17 @@ export const sendRaw = (name, params) => {
 export const scene = (name) => name
   ? sendRaw('SetCurrentScene', { 'scene-name': name })
   : sendRaw('GetCurrentScene')
+
+export const handlePOST = async (body) => {
+  const { sceneCollection: colle, restart } = body
+  if (colle || (colle === null)) {
+    return await setSceneColle(colle)
+  } else if (restart) {
+    kill()
+    return { message: 'obs restarting' }
+  }
+  throw new Error('unknown request')
+}
 
 const init = async () => {
   proc = await run('obs')
@@ -101,10 +113,12 @@ const init = async () => {
   const r = await sendRaw('GetAuthRequired')
   if (r?.authRequired) {
     const { challenge, salt } = r
-    const auth = hash(hash(password + salt) + challenge)
+    const auth = hash(hash(process.env.AUTH_TOKEN + salt) + challenge)
     await sendRaw('Authenticate', { auth })
   }
   log('[OBS-WS] connected')
 }
 
 export const launch = () => setTimeout(init, delay)
+
+init()

@@ -2,61 +2,50 @@ import * as obs from './obs.js'
 import * as srt from './srt.js'
 import * as vnc from './vnc.js'
 
-import { log, password } from './utils.js'
+import { log, useTwitch } from './utils.js'
 
-obs.launch()
-
-const version = process.env.VERSION || 'debug'
+const version = process.env.npm_package_version || 'debug'
 
 export const handler = async (req) => {
   const { method, body, url } = req
-  switch (url) {
-    case '/':
-      return { status: 'ok', version }
-    case '/info':
-      return { password }
-    case '/obs':
-      if (method === 'POST') {
-        const { sceneCollection: colle, restart } = await body()
-        if (colle) {
-          await obs.setSceneColle(colle)
-        } else if (restart) {
-          obs.kill()
-        } else {
-          throw new BadRequestError('unknown request')
-        }
-      } else if (method === 'GET') {
-        return {
-          sceneCollection: await obs.getSceneColle(),
-        }
+  const isGET = method === 'GET'
+  if (url === '/') {
+    if (isGET) return { status: 'ok', version }
+    const b = await body()
+    if (b.vnc) {
+      try {
+        await vnc.start(b.vnc)
+        return { message: 'vnc started' }
+      } catch (er) {
+        return { message: 'vnc failed' }
       }
-      break
-    case '/srt':
-      if (method === 'POST') {
-        const { src, dst } = await body()
-        let proc
-        try {
-          proc = await srt.create(src, dst)
-        } catch (err) {
-          throw new BadRequestError(err.message)
-        }
-        return srt.info.get(proc.pid)
-      } else if (method === 'DELETE') {
+    } else if (b.twitch) {
+      const user = await useTwitch(b.twitch)
+      return { message: `twitch ${user ? 'enabled' : 'failed'}` }
+    }
+    throw new BadRequestError('?')
+  } else if (url === '/obs') {
+    if (isGET) {
+      return {
+        sceneCollection: await obs.getSceneColle(),
       }
-      return Object.fromEntries(srt.info.entries())
-    case '/vnc':
-      if (method === 'POST') {
-        try {
-          await vnc.start(await body())
-        } catch (er) {
-          return { error: 'could not start vnc' }
-        }
-      }
-      return { running: vnc.info.running }
-      break
-    default:
-      log('[S] unknown', [method, url])
+    }
+    try {
+      return await obs.handlePOST(await body())
+    } catch (err) {
+      throw new BadRequestError(err.message)
+    }
+  } else if (url.startsWith('/srt')) {
+    if (url === '/srt' && isGET) {
+      return Object.fromEntries([...srt.info.entries()].map(([k, v]) => [k, v.info]))
+    }
+    try {
+      return await srt.handleRequest(url, (method === 'POST') ? (await body()) : null)
+    } catch (err) {
+      throw new BadRequestError(err.message)
+    }
   }
+  log('[S] unknown', [method, url])
   throw new NotFoundError(`${url} does not exist`)
 }
 
@@ -65,6 +54,11 @@ export const wsHandler = async (ws) => {
   ws.on('message', async (msg) => {
     log('[WS] client:', msg)
   })
+}
+
+export const onShutdown = async () => {
+  log('\n[S] shutting down...')
+  process.exit(0)
 }
 
 class BadRequestError {

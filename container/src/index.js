@@ -3,7 +3,7 @@ import { createServer } from 'http'
 import WS from 'ws'
 
 import { log } from './utils.js'
-import { handler, wsHandler } from './server.js'
+import { handler, wsHandler, onShutdown } from './server.js'
 
 const srvErr = { error: 'Error', message: 'something went wrong' }
 
@@ -14,7 +14,7 @@ const server = createServer((req, res) => {
       let data = ''
       req.on('error', (er) => reject(er))
       req.on('data', (d) => { data += d })
-      req.on('end', () => resolve(jp ? JSON.parse(data) : data))
+      req.on('end', () => resolve((jp && data) ? JSON.parse(data) : data))
     })
   }
 
@@ -43,10 +43,7 @@ const server = createServer((req, res) => {
 const wsServer = new WS.Server({ server })
 wsServer.on('connection', wsHandler)
 
-process.on('SIGINT', () => {
-  log('\n[S] shutting down...')
-  process.exit(0)
-})
+process.on('SIGINT', onShutdown)
 
 const port = parseInt(process.env.PORT) || 3000
 server.listen(port, () => log('[S] ready'))

@@ -18,7 +18,7 @@ export default {
     replace({
       preventAssignment: true,
       values: {
-        'process.env.VERSION': `"${version}"`,
+        'process.env.npm_package_version': `"${version}"`,
       }
     }),
     nodeResolve(),

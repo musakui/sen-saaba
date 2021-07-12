@@ -1,6 +1,4 @@
 .env
 .config
-.password
-.valid.json
 dist/
 node_modules/

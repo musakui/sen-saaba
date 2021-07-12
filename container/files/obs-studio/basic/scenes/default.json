@@ -110,7 +110,7 @@
         "reconnect_delay_sec": 1,
         "restart_on_activate": true,
         "clear_on_media_end": false,
-        "input": "udp://127.0.0.1:1936"
+        "input": "udp://localhost:10000"
       }
     },
     {
