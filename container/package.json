@@ -9,8 +9,8 @@
   "main": "src/index.js",
   "bin": "dist/bundle.js",
   "scripts": {
-    "docker:dev": "npm run build && ./scripts/docker-dev.sh",
-    "docker:deploy": "npm run build && ./scripts/docker-deploy.sh",
+    "docker:dev": "scripts/docker-dev.sh",
+    "docker:deploy": "scripts/docker-deploy.sh",
     "build": "rollup -c && pkg .",
     "start": "nodemon -r dotenv/config src/index.js"
   },

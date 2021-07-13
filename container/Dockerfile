@@ -45,6 +45,30 @@ RUN git checkout LibVNCServer-${VNC_VER}
 WORKDIR /tmp/build
 RUN cmake ../libvncserver && cmake --build .
 
+# build nodejs app
+FROM ubuntu:20.04 AS buildapp
+
+ARG NODE_VER=14
+
+ENV DEBIAN_FRONTEND noninteractive
+
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends curl ca-certificates \
+ && rm -rf /var/lib/apt/lists/*
+
+RUN curl -sLo - https://deb.nodesource.com/setup_${NODE_VER}.x | bash
+RUN apt-get update \
+ && apt-get install nodejs \
+ && rm -rf /var/lib/apt/lists/*
+
+RUN npm install -g npm@7
+
+COPY package* /
+COPY src /src
+COPY rollup.config.js /
+
+RUN npm install && npm run build
+
 # main
 FROM ubuntu:20.04 as main
 
@@ -84,11 +108,11 @@ RUN curl -sLo /ows.deb https://github.com/Palakis/obs-websocket/releases/downloa
 COPY --from=buildsrt /tmp/srt/srt-live-transmit /usr/bin/slt
 COPY --from=buildvnc /tmp/build/libvnc* /usr/lib/x86_64-linux-gnu/
 COPY --from=buildvnc /usr/local/bin/x11vnc /usr/bin/vnc
+COPY --from=buildapp /dist/saaba-docker /usr/bin/saaba
 
 COPY files/etc /etc
 COPY files/obs-studio /root/.config/obs-studio
 COPY files/startup.sh /
-COPY dist/saaba-docker /usr/bin/saaba
 
 WORKDIR /root
 ENV DISPLAY :1
