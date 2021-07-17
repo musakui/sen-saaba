@@ -46,7 +46,7 @@ echo -n "[INIT] services "
 nginx -c /etc/nginx/nginx.conf
 echo -n "."
 
-Xvfb :1 -screen 0 ${RESOLUTION:-1080x720}x24 &
+Xvfb :1 -screen 0 ${RESOLUTION:-960x720}x24 &
 echo -n "."
 
 echo " OK"
