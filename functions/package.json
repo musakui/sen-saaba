@@ -1,0 +1,31 @@
+{
+  "name": "saaba-functions",
+  "description": "saaba cloud functions",
+  "author": "musakui",
+  "license": "MIT",
+  "version": "0.0.1",
+  "private": "true",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "framework": "env-cmd functions-framework --target",
+    "dev:auth": "nodemon --exec 'npm run framework auth'",
+    "deploy": "gcloud functions deploy --env-vars-file=.env.yaml",
+    "logs": "gcloud functions logs read",
+    "list": "gcloud functions list"
+  },
+  "dependencies": {
+    "@google-cloud/compute": "^2.6.0",
+    "@google-cloud/firestore": "^4.13.2",
+    "@google-cloud/functions-framework": "^1.9.0",
+    "@google-cloud/secret-manager": "^3.8.0",
+    "node-fetch": "^2.6.1"
+  },
+  "devDependencies": {
+    "env-cmd": "^10.1.0",
+    "nodemon": "^2.0.12"
+  }
+}
