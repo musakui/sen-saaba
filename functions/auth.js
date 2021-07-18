@@ -25,6 +25,9 @@ export const auth = createFunction(async (req, res) => {
 
   const end = (frag) => (res.redirect(302, `${appUrl}/#${frag}`), null)
 
+  if (!req.headers.cookie) return end('error=sess')
+  req.cookies = new Map(req.headers.cookie.split('; ').map((c) => c.split('=')))
+
   const doc = sessions.doc(req.cookies.get('sess'))
   try {
     const docRef = await doc.get()

@@ -13,6 +13,7 @@
   "scripts": {
     "framework": "env-cmd functions-framework --target",
     "dev:auth": "nodemon --exec 'npm run framework auth'",
+    "dev:info": "nodemon --exec 'npm run framework info'",
     "deploy": "gcloud functions deploy --env-vars-file=.env.yaml",
     "logs": "gcloud functions logs read",
     "list": "gcloud functions list"
