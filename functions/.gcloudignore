@@ -1,3 +1,6 @@
 node_modules/
+core/
+src/
+rollup.config.js
 .env
 .env.yaml
