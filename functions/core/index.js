@@ -37,11 +37,13 @@ export const createFunction = (handler) => (req, res) => {
 export const getSession = async (req) => {
   const authHeader = req.header('Authorization')
   if (!authHeader) throw new Unauthorized('token required')
-  const sess = sessions.doc(authHeader.split(' ')[1])
+  const sid = authHeader.split(' ')[1]
+  const sess = sessions.doc(sid)
   const sessRef = await sess.get()
   if (!sessRef.exists) throw new Unauthorized('invalid token')
   const { token, uid } = await sessRef.data()
   return {
+    sid,
     doc: sess,
     token, uid,
   }

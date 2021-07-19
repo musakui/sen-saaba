@@ -12,16 +12,16 @@ const login = async (res, origin = '') => {
   res.redirect(302, authUrl(state))
 }
 
-const logout = async (res, tok) => {
-  const doc = sessions.doc(tok)
+const logout = async (res, { logout, url }) => {
+  const doc = sessions.doc(logout)
   const t = await (await doc.get()).get('token')
   await Promise.all([revoke(t), doc.delete()])
-  res.redirect(302, appUrl)
+  res.redirect(302, `https://${url || appUrl}/`)
 }
 
 export const auth = createFunction(async (req, res) => {
-  if (req.query.logout) return await logout(res, req.query.logout)
-  if (!req.query.code) return await login(res, req.query.origin)
+  if (req.query.logout) return await logout(res, req.query)
+  if (!req.query.code) return await login(res, req.query.url)
 
   const end = (frag, url) => (res.redirect(302, `https://${url || appUrl}/#${frag}`), null)
 

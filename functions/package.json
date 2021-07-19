@@ -14,6 +14,7 @@
     "build": "rollup -c --input",
     "build:auth": "npm run build src/auth.js",
     "build:info": "npm run build src/info.js",
+    "build:vm": "npm run build src/vm.js",
     "dev": "nodemon -r dotenv/config src/index.js",
     "framework": "env-cmd functions-framework --target",
     "deploy": "gcloud functions deploy --env-vars-file=.env.yaml",
