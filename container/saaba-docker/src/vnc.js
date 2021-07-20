@@ -1,6 +1,7 @@
 import { log, run } from './utils.js'
 
-const defaultArgs = ['-noxdamage']
+const defaultArgs = [
+]
 
 let proc = null
 
@@ -8,9 +9,9 @@ export const start = async (opts = {}) => {
   if (proc) return
   const args = opts.args || defaultArgs
   proc = await run('vnc', ['-rfbauth', '.vncpass', ...args])
-  log('[VNC] Started')
+  log('[VNC] started')
   proc.on('exit', () => {
-    log('[VNC] Stopped')
+    log('[VNC] stopped')
     proc = null
   })
 }

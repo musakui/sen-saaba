@@ -13,7 +13,8 @@ const hash = (str) => {
   return h.digest('base64')
 }
 
-const sceneColleFile = '.config/obs-studio/basic/scenes/default.json'
+const configDir = '.config/obs-studio'
+const sceneColleFile = `${configDir}/basic/scenes/default.json`
 
 let defaultSceneColle = '{}'
 readFile(sceneColleFile).then((txt) => {
@@ -48,6 +49,18 @@ export const setSceneColle = async (data = null) => {
   return { message: 'scene collection updated' }
 }
 
+const dockLine = 'ExtraBrowserDocks'
+
+export const setDock = (url) => {
+  if (!url) return
+  const docks = JSON.stringify([{ title: 'dock', url }])
+  proc?.kill()
+  return run('sed', [
+    '-i',
+    `s|^${dockLine}.*|${dockLine}=${docks}|`,
+    `${configDir}/global.ini`,
+  ])
+}
 
 export const sendRaw = (name, params) => {
   if (!ws) return
@@ -67,9 +80,16 @@ export const scene = (name) => name
   : sendRaw('GetCurrentScene')
 
 export const handlePOST = async (body) => {
-  const { sceneCollection: colle, restart } = body
+  const {
+    sceneCollection: colle,
+    dock,
+    restart,
+  } = body
   if (colle || (colle === null)) {
     return await setSceneColle(colle)
+  } else if (dock) {
+    await setDock(dock)
+    return { message: 'updating dock' }
   } else if (restart) {
     kill()
     return { message: 'obs restarting' }
@@ -107,7 +127,7 @@ const init = async () => {
       messages.delete(msgID)
       if (error) { reject(error) } else { resolve(info) }
     } else {
-      // log('[OBS WS]', t, info)
+      // log('[OBS] ws', t, info)
     }
   })
   const r = await sendRaw('GetAuthRequired')
@@ -116,7 +136,7 @@ const init = async () => {
     const auth = hash(hash(process.env.AUTH_TOKEN + salt) + challenge)
     await sendRaw('Authenticate', { auth })
   }
-  log('[OBS-WS] connected')
+  log('[OBS] ws connected')
 }
 
 export const launch = () => setTimeout(init, delay)
