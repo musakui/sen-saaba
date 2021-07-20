@@ -6,6 +6,16 @@ import { log, useTwitch } from './utils.js'
 
 const version = process.env.npm_package_version || 'debug'
 
+const sockets = new Map()
+
+const updateStats = async (proc) => {
+  for (const send of sockets.values()) send('SrtInit', proc.info)
+  for await (const evt of proc.events()) {
+    const name = evt.info ? 'SrtInfo' : 'SrtStat'
+    for (const send of sockets.values()) send(name, evt)
+  }
+}
+
 export const handler = async (req) => {
   const { method, body, url } = req
   const isGET = method === 'GET'
@@ -40,7 +50,12 @@ export const handler = async (req) => {
       return Object.fromEntries([...srt.info.entries()].map(([k, v]) => [k, v.info]))
     }
     try {
-      return await srt.handleRequest(url, (method === 'POST') ? (await body()) : null)
+      if (method === 'DELETE') return await srt.remove(url)
+      if (method === 'POST') {
+        const proc = await srt.create(await body())
+        updateStats(proc)
+        return proc.info
+      }
     } catch (err) {
       throw new BadRequestError(err.message)
     }
@@ -49,14 +64,36 @@ export const handler = async (req) => {
   throw new NotFoundError(`${url} does not exist`)
 }
 
-export const wsHandler = async (ws) => {
-  log('[WS] client connected')
-  ws.on('message', async (msg) => {
-    log('[WS] client:', msg)
+export const wsHandler = async (ws, req) => {
+  const remote = req.headers['x-forwarded-for']
+  const send = (messageType, msg) => {
+    try {
+      ws.send(JSON.stringify({ messageType, ...msg }))
+    } catch (er) {
+      log('[WS] error', er)
+    }
+  }
+  let authed = false
+  ws.on('message', async (m) => {
+    const msg = JSON.parse(m)
+    if (msg.messageType === 'Identify' && msg.token === process.env.AUTH_TOKEN) {
+      authed = true
+      send('Identified')
+      sockets.set(remote, send)
+      log('[WS] connected', remote)
+      return
+    }
+    if (!authed) return
+    log('[WS]', remote, msg)
+  })
+  ws.on('close', () => sockets.delete(remote))
+  send('Hello', {
+    version,
   })
 }
 
 export const onShutdown = async () => {
+  for (const send of sockets.values()) send('Shutdown')
   log('\n[S] shutting down...')
   process.exit(0)
 }

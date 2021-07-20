@@ -44,6 +44,7 @@ const wsServer = new WS.Server({ server })
 wsServer.on('connection', wsHandler)
 
 process.on('SIGINT', onShutdown)
+process.on('SIGTERM', onShutdown)
 
 const port = parseInt(process.env.PORT) || 3000
-server.listen(port, () => log('[S] ready'))
+server.listen(port, () => log('[APP] ready'))

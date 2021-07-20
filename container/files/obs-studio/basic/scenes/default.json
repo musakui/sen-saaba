@@ -4,29 +4,54 @@
   "scene_order": [{"name":"main"},{"name":"brb"}],
   "sources": [
     {
-      "name": "BRB", "enabled": true, "id": "text_ft2_source",
-      "muted": false, "volume": 1, "balance": 0.5,
-      "settings": { "text": "BRB" }
-    },
-    {
-      "name": "brb", "enabled": true, "id": "scene",
+      "name": "main", "enabled": true, "id": "scene",
       "muted": false, "volume": 1, "balance": 0.5,
       "settings": {
-        "id_counter": 1, "custom_size": false,
         "items": [
           {
-            "name": "BRB", "id": 1,
+            "name": "ComfyJazz",
+            "locked": true, "visible": true,
+            "pos": { "x": 50, "y": 50 },
+            "rot": 0
+          },
+          {
+            "name": "time",
+            "locked": true, "visible": true,
+            "pos": { "x": 1420, "y": 20 },
+            "scale": { "x": 0.6, "y": 0.6 },
+            "rot": 0
+          },
+          {
+            "name": "text-test",
             "locked": false, "visible": true,
-            "pos": { "x": 695, "y": 412 },
-            "scale": { "x": 1, "y": 1 },
+            "pos": { "x": 340, "y": 400 },
             "rot": 0
           }
         ]
       }
     },
     {
+      "name": "brb", "enabled": true, "id": "scene",
+      "muted": false, "volume": 1, "balance": 0.5,
+      "settings": {
+        "items": [
+          {
+            "name": "BRB",
+            "locked": false, "visible": true,
+            "pos": { "x": 700, "y": 400 },
+            "rot": 0
+          }
+        ]
+      }
+    },
+    {
+      "name": "BRB", "enabled": true, "id": "text_ft2_source",
+      "settings": {
+        "text": "BRB"
+      }
+    },
+    {
       "name": "time", "enabled": true, "id": "browser_source",
-      "muted": false, "volume": 1, "balance": 0.5, "mixers": 255,
       "filters": [
         {
           "name": "Crop/Pad", "enabled": true, "id": "crop_filter",
@@ -39,43 +64,6 @@
       }
     },
     {
-      "name": "main", "enabled": true, "id": "scene",
-      "muted": false, "volume": 1, "balance": 0.5,
-      "settings": {
-        "id_counter": 6,
-        "items": [
-          {
-            "name": "ComfyJazz", "id": 6,
-            "locked": true, "visible": true,
-            "pos": { "x": 50, "y": 800 },
-            "scale": { "x": 1, "y": 1 },
-            "rot": 0
-          },
-          {
-            "name": "srt-test", "id": 4,
-            "locked": false, "visible": true,
-            "pos": { "x": 0, "y": 0 },
-            "scale": { "x": 1, "y": 1 },
-            "rot": 0
-          },
-          {
-            "name": "text-test", "id": 2,
-            "locked": false, "visible": true,
-            "pos": { "x": 340, "y": 400 },
-            "scale": { "x": 1, "y": 1 },
-            "rot": 0
-          },
-          {
-            "name": "time", "id": 5,
-            "locked": true, "visible": true,
-            "pos": { "x": 1420, "y": 20 },
-            "scale": { "x": 0.6, "y": 0.6 },
-            "rot": 0
-          }
-        ]
-      }
-    },
-    {
       "name": "text-test", "enabled": true, "id": "text_ft2_source",
       "filters": [
         {
@@ -84,7 +72,6 @@
         }
       ],
       "settings": {
-        "log_lines": 6,
         "outline": true,
         "text": "test    ",
         "word_wrap": false,
@@ -98,19 +85,6 @@
           "style": "Book",
           "face": "DejaVu Sans Mono"
         }
-      }
-    },
-    {
-      "name": "srt-test", "enabled": true, "id": "ffmpeg_source",
-      "muted": false, "volume": 1, "balance": 0.5, "mixers": 255,
-      "settings": {
-        "buffering_mb": 1,
-        "is_local_file": false,
-        "input_format": "mpegts",
-        "reconnect_delay_sec": 1,
-        "restart_on_activate": true,
-        "clear_on_media_end": false,
-        "input": "udp://localhost:10000"
       }
     },
     {
