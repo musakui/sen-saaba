@@ -112,6 +112,15 @@ RUN make && DESTDIR=/built make install
 
 # main
 FROM debian:stable-slim as main
+LABEL maintainer="musakui.dev@gmail.com"
+
+ARG BUILD_DATE
+
+LABEL org.opencontainers.image.created=$BUILD_DATE
+LABEL org.opencontainers.image.url="https://saaba.live"
+LABEL org.opencontainers.image.source="https://github.com/musakui/saaba"
+LABEL org.opencontainers.image.licenses="MIT"
+LABEL org.opencontainers.image.title="saaba"
 
 # libxtst6, liblzo2 for x11vnc
 RUN apt-get update \

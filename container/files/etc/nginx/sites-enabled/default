@@ -11,9 +11,9 @@ server {
   error_page 404 = @notfound;
 
   location = / {
-    add_header 'Content-Type' 'text/plain' always;
+    add_header 'Content-Type' 'application/json' always;
     include cors.conf;
-    return 200 'ok';
+    return 200 '"ok"';
   }
 
   location = /favicon.ico {

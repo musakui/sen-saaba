@@ -11,6 +11,8 @@ const sockets = new Map()
 const updateStats = async (proc) => {
   for (const send of sockets.values()) send('SrtInit', proc.info)
   for await (const evt of proc.events()) {
+    // TODO: low bitrate / disconnect handling
+
     const name = evt.info ? 'SrtInfo' : 'SrtStat'
     for (const send of sockets.values()) send(name, evt)
   }
@@ -94,7 +96,7 @@ export const wsHandler = async (ws, req) => {
 
 export const onShutdown = async () => {
   for (const send of sockets.values()) send('Shutdown')
-  log('\n[S] shutting down...')
+  log('\n[APP] shutting down...')
   process.exit(0)
 }
 
