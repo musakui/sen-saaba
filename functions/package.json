@@ -15,6 +15,7 @@
     "build:auth": "npm run build src/auth.js",
     "build:info": "npm run build src/info.js",
     "build:vm": "npm run build src/vm.js",
+    "build:dns": "npm run build src/dns.js",
     "dev": "nodemon -r dotenv/config src/index.js",
     "framework": "env-cmd functions-framework --target",
     "deploy": "gcloud functions deploy --env-vars-file=.env.yaml",
@@ -23,6 +24,7 @@
   },
   "dependencies": {
     "@google-cloud/compute": "^2.6.0",
+    "@google-cloud/dns": "^2.2.0",
     "@google-cloud/firestore": "^4.13.2",
     "@google-cloud/functions-framework": "^1.9.0",
     "@google-cloud/secret-manager": "^3.8.0",

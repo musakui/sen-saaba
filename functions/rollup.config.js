@@ -8,6 +8,7 @@ export default {
   },
   external: [
     'node-fetch',
+    '@google-cloud/dns',
     '@google-cloud/compute',
     '@google-cloud/firestore',
     '@google-cloud/secret-manager',
