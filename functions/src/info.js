@@ -35,8 +35,7 @@ export const info = createFunction(async (req, res) => {
     if (req.body) {
       console.log('post', req.body)
     } else {
-      const { data: [d] } = await api(token, `streams/key?broadcaster_id=${sess.uid}`)
-      Object.assign(data, { token, key: d.stream_key })
+      Object.assign(data, { token })
     }
   }
   Promise.all(tasks).then((t) => console.log('done tasks:', t.length))

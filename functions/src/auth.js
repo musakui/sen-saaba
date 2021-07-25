@@ -1,6 +1,6 @@
 import { random } from '../core/utils.js'
 import { sessions, createFunction } from '../core/index.js'
-import { authUrl, getToken, revoke } from '../core/twitch.js'
+import { authUrl, getToken, revoke } from '../core/twitchAuth.js'
 
 const appUrl = process.env.APP_URL
 

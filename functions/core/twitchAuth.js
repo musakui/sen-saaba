@@ -1,11 +1,9 @@
 import fetch from 'node-fetch'
 import { getSecret } from './utils.js'
+import { clientId as client_id } from './twitch.js'
 
 const POST = { method: 'POST' }
 const ID_URL = 'https://id.twitch.tv/oauth2'
-const API_URL = 'https://api.twitch.tv/helix'
-
-const client_id = process.env.TWITCH_CLIENT_ID
 const redirect_uri = process.env.SELF_URL
 
 const scope = [
@@ -46,19 +44,4 @@ const endQs = new URLSearchParams({ client_id })
 export const revoke = (t) => {
   endQs.set('token', t)
   return fetch(`${ID_URL}/revoke?${endQs}`, POST)
-}
-
-export const api = (token, q, params) => {
-  const opts = {
-    headers: {
-      'Client-Id': client_id,
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
-  }
-  if (params) {
-    opts.method = 'POST'
-    opts.body = JSON.stringify(params)
-  }
-  return fetch(`${API_URL}/${q || ''}`, opts).then((r) => r.json())
 }
