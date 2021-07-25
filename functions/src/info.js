@@ -32,11 +32,7 @@ export const info = createFunction(async (req, res) => {
     tasks.push(getUser(token).then(({ id, ...u }) => store.doc(id).update(u)))
   }
   if (req.method === 'POST') {
-    if (req.body) {
-      console.log('post', req.body)
-    } else {
-      Object.assign(data, { token })
-    }
+    console.log('post', req.body)
   }
   Promise.all(tasks).then((t) => console.log('done tasks:', t.length))
   return { status: 'ok', ...data }
