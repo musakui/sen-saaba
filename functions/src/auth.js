@@ -1,8 +1,11 @@
 import { random } from '../core/utils.js'
-import { sessions, createFunction } from '../core/index.js'
+import { sessions, getSession, createFunction } from '../core/index.js'
 import { authUrl, getToken, revoke } from '../core/twitchAuth.js'
 
 const appUrl = process.env.APP_URL
+const redirect = (res, url, frag = '') => {
+  res.redirect(302, `https://${url || appUrl}/#${frag}`)
+}
 
 const login = async (res, origin = '') => {
   const state = random()
@@ -16,14 +19,33 @@ const logout = async (res, { logout, url }) => {
   const doc = sessions.doc(logout)
   const t = await (await doc.get()).get('token')
   await Promise.all([revoke(t), doc.delete()])
-  res.redirect(302, `https://${url || appUrl}/`)
+  redirect(res, url)
+}
+
+const now = () => Date.now() / 1000
+
+const tokens = async (code, refresh = false) => {
+  const info = await getToken(code, refresh)
+  return {
+    token: info.access_token,
+    expiry: Math.floor(now() + info.expires_in),
+    refresh: info.refresh_token,
+  }
 }
 
 export const auth = createFunction(async (req, res) => {
   if (req.query.logout) return await logout(res, req.query)
+  try {
+    const sess = await getSession(req)
+    if ((sess.expiry - now()) > 7200) return { token: sess.token }
+    const info = await tokens(sess.refresh, true)
+    await sess.doc.update(info)
+    return { token: info.token }
+  } catch (er) {
+  }
   if (!req.query.code) return await login(res, req.query.url)
 
-  const end = (frag, url) => (res.redirect(302, `https://${url || appUrl}/#${frag}`), null)
+  const end = (frag) => redirect(res, '', frag)
 
   if (!req.headers.cookie) return end('error=sess')
   req.cookies = new Map(req.headers.cookie.split('; ').map((c) => c.split('=')))
@@ -39,14 +61,10 @@ export const auth = createFunction(async (req, res) => {
   }
 
   try {
-    const {
-      access_token: token,
-      refresh_token, expires_in,
-    } = await getToken(req.query.code)
+    const info = await tokens(req.query.code)
     const origin = await (await doc.get()).get('origin')
-    const expiry = Math.floor((Date.now() / 1000) + expires_in)
-    await doc.set({ token, refresh_token, expiry })
-    return end(`token=${doc.id}`, origin)
+    await doc.set(info)
+    return redirect(res, origin, `token=${doc.id}`)
   } catch (er) {
   }
 

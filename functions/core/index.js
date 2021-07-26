@@ -41,10 +41,9 @@ export const getSession = async (req) => {
   const sess = sessions.doc(sid)
   const sessRef = await sess.get()
   if (!sessRef.exists) throw new Unauthorized('invalid token')
-  const { token, uid } = await sessRef.data()
   return {
     sid,
     doc: sess,
-    token, uid,
+    ...(await sessRef.data()),
   }
 }
