@@ -1,6 +1,6 @@
-import { random } from '../core/utils.js'
-import { sessions, getSession, createFunction } from '../core/index.js'
-import { authUrl, getToken, revoke } from '../core/twitchAuth.js'
+import { random } from './core/utils.js'
+import { authUrl, getToken, revoke } from './core/twitchAuth.js'
+import { sessions, getSession, createFunction } from './core/index.js'
 
 const appUrl = process.env.APP_URL
 const redirect = (res, url, frag = '') => {

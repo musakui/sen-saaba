@@ -1,12 +1,22 @@
 import { nodeResolve } from '@rollup/plugin-node-resolve'
 import { terser } from 'rollup-plugin-terser'
 
+const common = new Set('index,errors,utils'.split(','))
+
 export default {
+  input: 'src/index.js',
   output: {
-    file: 'index.js',
+    dir: 'dist',
     format: 'esm',
+    chunkFileNames: '[name].js',
+    manualChunks (id) {
+      const match = /(\/core\/)?([^\/]+).js$/.exec(id)
+      if (!match[1]) return match[2]
+      if (common.has(match[2])) return 'common'
+    },
   },
   external: [
+    'express',
     'node-fetch',
     '@google-cloud/dns',
     '@google-cloud/compute',

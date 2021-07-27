@@ -1,6 +1,6 @@
 import fetch from 'node-fetch'
 import { getSecret } from './utils.js'
-import { clientId as client_id } from './twitch.js'
+import { twitchClientId as client_id } from './index.js'
 
 const POST = { method: 'POST' }
 const ID_URL = 'https://id.twitch.tv/oauth2'

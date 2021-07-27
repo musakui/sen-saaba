@@ -1,7 +1,7 @@
 import fetch from 'node-fetch'
+import { twitchClientId as clientId } from './index.js'
 
 const API_URL = 'https://api.twitch.tv/helix'
-export const clientId = process.env.TWITCH_CLIENT_ID
 
 export const api = (token, q, params) => {
   const opts = {

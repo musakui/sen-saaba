@@ -2,13 +2,19 @@ import Compute from '@google-cloud/compute'
 
 import { getSecret } from './utils.js'
 
-let certStr = ''
-const certUrl = process.env.CERT_URL
-getSecret(process.env.CERT_SEC).then((s) => { certStr = s })
+const {
+  CERT_URL: certUrl,
+  CERT_SEC: certSecret,
+  SERVER_TAGS = '',
+  GCP_REGION: defaultRegion = 'asia-southeast1', // singapore
+  GCP_SRC_IMG: defaultImage = 'projects/cos-cloud/global/images/family/cos-stable',
+  GCP_MACHINE: defaultMachine = 'n2d-highcpu-2',
+} = process.env
 
-const serverTags = (process.env.SERVER_TAGS || '').split(',')
-const sourceImage = process.env.GCP_SRC_IMG || 'projects/cos-cloud/global/images/family/cos-stable'
-const defaultRegion = process.env.GCP_REGION || 'asia-southeast1' // singapore
+let certStr = ''
+getSecret(certSecret).then((s) => { certStr = s })
+
+const serverTags = SERVER_TAGS.split(',')
 
 const getContainerDeclaration = (token) => ({
   key: 'gce-container-declaration',
@@ -76,7 +82,8 @@ export const create = async (prefix, token, opts) => {
   const preemptible = !opts.tier
   const name = `${prefix}-${opts.tier || 0}`
   const zone = await getZone(opts.region || defaultRegion)
-  const machineType = await getMachine(zone, opts.machine || 'n2d-highcpu-2')
+  const machineType = await getMachine(zone, opts.machine || defaultMachine)
+  const sourceImage = opts.sourceImage || defaultImage
 
   const accessConfigs = [{
     name: 'eNAT',

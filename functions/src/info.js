@@ -1,7 +1,9 @@
-import { api } from '../core/twitch.js'
-import { store, getSession, createFunction } from '../core/index.js'
+import { api } from './core/twitch.js'
+import { store, getSession, createFunction } from './core/index.js'
 
-const getUser = (token) => api(token, 'users').then(({ data: [u] }) => {
+const getUser = (token) => api(token, 'users').then(({ data }) => {
+  if (!data) return { id: 'expired', token }
+  const u = data[0]
   const { id, login, display_name, profile_image_url, email } = u
   return {
     id,
