@@ -54,7 +54,7 @@ const dockLine = 'ExtraBrowserDocks'
 export const setDock = (url) => {
   if (!url) return
   const docks = JSON.stringify([{ title: 'dock', url }])
-  proc?.kill()
+  kill()
   return run('sed', [
     '-i',
     `s|^${dockLine}.*|${dockLine}=${docks}|`,
@@ -64,20 +64,24 @@ export const setDock = (url) => {
 
 export const sendRaw = (name, params) => {
   if (!ws) return
-  const prom = {}
-  const msgID = '' + (++curID)
-  messages.set(msgID, prom)
+  const msgID = `${++curID}`
+  const prom = new Promise((resolve, reject) => messages.set(msgID, { resolve, reject }))
   ws.send(JSON.stringify({
   'request-type': name,
     'message-id': msgID,
     ...params,
   }))
-  return new Promise((resolve, reject) => Object.assign(prom, { resolve, reject }))
+  return prom
 }
 
 export const scene = (name) => name
   ? sendRaw('SetCurrentScene', { 'scene-name': name })
   : sendRaw('GetCurrentScene')
+
+export const setStreamKey = (key) => sendRaw('SetStreamSettings', {
+  type: 'rtmp_common',
+  settings: { server: 'auto', key },
+})
 
 export const handlePOST = async (body) => {
   const {

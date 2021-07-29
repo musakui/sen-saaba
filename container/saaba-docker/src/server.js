@@ -1,8 +1,9 @@
 import * as obs from './obs.js'
 import * as srt from './srt.js'
 import * as vnc from './vnc.js'
+import * as twitch from './twitch.js'
 
-import { log, useTwitch } from './utils.js'
+import { log } from './utils.js'
 
 const version = process.env.npm_package_version || 'debug'
 
@@ -31,11 +32,16 @@ export const handler = async (req) => {
       } catch (er) {
         return { message: 'vnc failed' }
       }
-    } else if (b.twitch) {
-      const user = await useTwitch(b.twitch)
-      return { message: `twitch ${user ? 'enabled' : 'failed'}` }
     }
     throw new BadRequestError('?')
+  } else if (url === '/twitch') {
+    if (isGET) return twitch.state
+    try {
+      const { login } = await twitch.use(await body())
+      return { message: 'twitch enabled', user: login }
+    } catch (err) {
+      throw new BadRequestError(err.message)
+    }
   } else if (url === '/obs') {
     if (isGET) {
       return {
@@ -49,7 +55,9 @@ export const handler = async (req) => {
     }
   } else if (url.startsWith('/srt')) {
     if (url === '/srt' && isGET) {
-      return Object.fromEntries([...srt.info.entries()].map(([k, v]) => [k, v.info]))
+      const info = []
+      for (const s of srt.info.values()) info.push(s.info)
+      return { info }
     }
     try {
       if (method === 'DELETE') return await srt.remove(url)

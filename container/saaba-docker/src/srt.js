@@ -184,6 +184,15 @@ class SLT {
 
 const srtRegex = /^\/srt\/(\w+)$/
 
+const getProc = (url) => {
+  const port = url.match(srtRegex)?.[1]
+  const pid = ports.get(parseInt(port))
+  if (!pid) throw new Error('port not in use')
+  const proc = info.get(pid)
+  if (!proc) throw new Error('no such id')
+  return proc
+}
+
 export const create = async (opts) => {
   const s = new SLT(opts)
   await s.ready
@@ -191,9 +200,7 @@ export const create = async (opts) => {
 }
 
 export const remove = async (url) => {
-  const pid = url.match(srtRegex)?.[1]
-  const proc = info.get(parseInt(pid))
-  if (!proc) throw new Error('no such id')
+  const proc = getProc(url)
   proc.kill()
   return { message: 'killed' }
 }
