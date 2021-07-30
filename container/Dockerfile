@@ -55,8 +55,8 @@ RUN apt-get update \
 
 RUN npm install -g npm@7
 
-COPY saaba-docker /tmp
-WORKDIR /tmp
+COPY packages/saaba-docker /tmp/app
+WORKDIR /tmp/app
 RUN npm install && npm run build
 
 # build obs
@@ -142,12 +142,12 @@ COPY --from=buildobs /built/usr /usr
 COPY --from=buildsrt /tmp/srt/srt-live-transmit /usr/bin/slt
 COPY --from=buildvnc /tmp/build/libvnc* /usr/lib/x86_64-linux-gnu/
 COPY --from=buildvnc /usr/local/bin/x11vnc /usr/bin/vnc
-COPY --from=buildapp /tmp/dist/saaba-docker /usr/bin/saaba
+COPY --from=buildapp /tmp/app/dist/saaba-docker /usr/bin/saaba
 RUN ldconfig
 
-COPY files/etc /etc
-COPY files/obs-studio /root/.config/obs-studio
-COPY files/startup.sh /
+COPY container/files/etc /etc
+COPY container/files/obs-studio /root/.config/obs-studio
+COPY container/files/startup.sh /
 
 WORKDIR /root
 ENV DISPLAY :1

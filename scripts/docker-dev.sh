@@ -1,5 +1,5 @@
 #!/bin/sh
-docker build -t saaba:dev . \
+docker build -f container/Dockerfile -t saaba:dev . \
  && docker image prune -f \
  && docker run \
       --rm --init --env-file .env \
