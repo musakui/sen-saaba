@@ -1,0 +1,18 @@
+{
+  "name": "obs-ws",
+  "description": "OBS WebSocket client",
+  "author": "musakui",
+  "license": "MIT",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "src/index.js",
+  "exports": {
+    "node": "./src/node.js",
+    "browser": "./src/browser.js"
+  },
+  "scripts": {
+  },
+  "optionalDependencies": {
+    "ws": "^8.0.0"
+  }
+}

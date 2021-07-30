@@ -21,7 +21,10 @@ export default {
         'process.env.npm_package_version': `"${version}"`,
       }
     }),
-    nodeResolve(),
+    nodeResolve({
+      dedupe: ['ws'],
+      exportConditions: ['node', 'module', 'import', 'default'],
+    }),
     commonjs({
       ignore: [
         'bufferutil',

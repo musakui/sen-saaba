@@ -55,6 +55,7 @@ RUN apt-get update \
 
 RUN npm install -g npm@7
 
+COPY packages/obs-ws /tmp/obs-ws
 COPY packages/saaba-docker /tmp/app
 WORKDIR /tmp/app
 RUN npm install && npm run build

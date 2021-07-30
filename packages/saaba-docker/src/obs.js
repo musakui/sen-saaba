@@ -1,17 +1,7 @@
 import { writeFile } from 'fs/promises'
-import { createHash } from 'crypto'
-
-import WS from 'ws'
+import { createOBS } from 'obs-ws'
 
 import { log, run, millis, readFile } from './utils.js'
-
-const camel = ([k, v]) => [k.replace(/-./g, (c) => c[1].toUpperCase()), v]
-
-const hash = (str) => {
-  const h = createHash('sha256')
-  h.update(str, 'utf-8')
-  return h.digest('base64')
-}
 
 const configDir = '.config/obs-studio'
 const sceneColleFile = `${configDir}/basic/scenes/default.json`
@@ -25,8 +15,7 @@ let proc = null
 let delay = 2000
 
 let ws = null
-let curID = 0
-const messages = new Map()
+const password = process.env.AUTH_TOKEN
 
 export const kill = () => proc?.kill()
 
@@ -64,14 +53,7 @@ export const setDock = (url) => {
 
 export const sendRaw = (name, params) => {
   if (!ws) return
-  const msgID = `${++curID}`
-  const prom = new Promise((resolve, reject) => messages.set(msgID, { resolve, reject }))
-  ws.send(JSON.stringify({
-  'request-type': name,
-    'message-id': msgID,
-    ...params,
-  }))
-  return prom
+  return ws.request(name, params)
 }
 
 export const scene = (name) => name
@@ -82,6 +64,20 @@ export const setStreamKey = (key) => sendRaw('SetStreamSettings', {
   type: 'rtmp_common',
   settings: { server: 'auto', key },
 })
+
+export const setItemZ = async (id, z, name) => {
+  const current = await scene()
+  const swap = name && (current.name !== name)
+  const { sources } = swap
+    ? (await scene(name).then(() => scene()))
+    : current
+
+  const items = sources.filter((s) => s.id !== id)
+  items.splice(z ?? items.length, 0, { id })
+  await sendRaw('ReorderSceneItems', { items })
+
+  if (swap) await scene(current.name)
+}
 
 export const handlePOST = async (body) => {
   const {
@@ -110,35 +106,10 @@ const init = async () => {
   })
   await millis(3000)
   try {
-    ws = await new Promise((resolve, reject) => {
-      const w = new WS('ws://localhost:4444')
-      w.on('open', () => resolve(w))
-      w.on('error', (err) => reject(err))
-    })
+    ws = await createOBS('ws://localhost:4444', { password })
   } catch (er) {
     ws = null
     return
-  }
-  ws.on('message', (msg) => {
-    const {
-      'update-type': t,
-      'message-id': msgID,
-      status, error, ...d
-    } = JSON.parse(msg)
-    const info = error ?? Object.fromEntries(Object.entries(d).map(camel))
-    if (msgID) {
-      const { resolve, reject } = messages.get(msgID)
-      messages.delete(msgID)
-      if (error) { reject(error) } else { resolve(info) }
-    } else {
-      // log('[OBS] ws', t, info)
-    }
-  })
-  const r = await sendRaw('GetAuthRequired')
-  if (r?.authRequired) {
-    const { challenge, salt } = r
-    const auth = hash(hash(process.env.AUTH_TOKEN + salt) + challenge)
-    await sendRaw('Authenticate', { auth })
   }
   log('[OBS] ws connected')
 }
