@@ -1,11 +1,11 @@
+import EventEmitter from 'events'
 import { createServer } from 'http'
 
-import WS from 'ws'
-
 import { log } from './utils.js'
-import { handler, wsHandler, onShutdown } from './server.js'
+import { handler } from './server.js'
 
-const srvErr = { error: 'Error', message: 'something went wrong' }
+const app = new EventEmitter()
+const serverError = { error: 'Error', message: 'something went wrong' }
 
 const server = createServer((req, res) => {
   if (req.method === 'POST') {
@@ -18,30 +18,46 @@ const server = createServer((req, res) => {
     })
   }
 
-  let code = 500
-  let response = { error: '?' }
+  const respond = (code, data) => {
+    const body = JSON.stringify(data)
+    res.writeHead(code, {
+      'content-type': 'application/json',
+      'content-length': Buffer.byteLength(body),
+    }).end(body, 'utf-8')
+  }
+
+  const stream = async (gen) => {
+    res.writeHead(200, {
+      'content-type': 'application/octet-stream',
+    })
+    app.on('stop', () => res.end())
+    for await (const evt of gen()) {
+      res.write(JSON.stringify(evt))
+    }
+    res.end()
+  }
 
   handler(req)
     .then((resp) => {
-      code = 200
-      response = resp
+      if (resp.constructor.name === 'AsyncGeneratorFunction') {
+        stream(resp)
+      } else {
+        respond(200, resp)
+      }
     })
     .catch((err) => {
       const { httpStatus, ...info } = err
-      code = httpStatus || 500
-      response = httpStatus ? info : srvErr
-    })
-    .finally(() => {
-      const body = JSON.stringify(response)
-      res.writeHead(code, {
-        'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(body),
-      }).end(body, 'utf-8')
+      respond(httpStatus || 500, httpStatus ? info : serverError)
     })
 })
 
-const wsServer = new WS.Server({ server })
-wsServer.on('connection', wsHandler)
+export const onShutdown = (sig) => {
+  log('\n[APP] signal:', sig)
+  app.emit('stop')
+  server.close()
+  log('[APP] shutdown')
+  process.exit(0)
+}
 
 process.on('SIGINT', onShutdown)
 process.on('SIGTERM', onShutdown)

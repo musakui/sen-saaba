@@ -1,4 +1,6 @@
-import { scene, sendRaw } from './obs.js'
+import { EventEmitter } from 'events'
+
+import { sendRaw, setItemZ } from './obs.js'
 import { log, run } from './utils.js'
 
 const parse = (obj, f = parseInt) => Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, f(v)]))
@@ -7,7 +9,18 @@ const srtParams = {
   mode: 'listener',
 }
 
-const scaleType = 'OBS_BOUNDS_SCALE_INNER'
+const setItemProps = async (item, sceneName, props) => {
+  if (!props.bounds) {
+    const { baseWidth: x, baseHeight: y } = await sendRaw('GetVideoInfo')
+    props.bounds = { type: 'OBS_BOUNDS_SCALE_INNER', x, y }
+  }
+
+  await sendRaw('SetSceneItemProperties', {
+    'scene-name': sceneName,
+    item,
+    ...props,
+  })
+}
 
 const defaultSettings = {
   buffering_mb: 1,
@@ -18,7 +31,7 @@ const defaultSettings = {
   clear_on_media_end: false,
 }
 
-const ports = new Map()
+export const ports = new Map()
 const udpPorts = new Set()
 export const info = new Map()
 
@@ -31,10 +44,11 @@ const getPort = (p = udpPortStart) => {
 
 let counter = 0
 
-class SLT {
+class SLT extends EventEmitter {
   constructor (opts) {
     const port = opts.port
     if (ports.has(port)) throw new Error(`port ${port} in use`)
+    super()
     this._port = port
     this._name = opts.name || `srt-${++counter}`
     this._scene = opts.scene || 'main'
@@ -55,7 +69,6 @@ class SLT {
     this._proc = null
     this._itemId = null
     this._running = false
-
     this._readyPromise = this._init()
   }
 
@@ -77,10 +90,8 @@ class SLT {
     }
   }
 
-  _notify (data) {
-    if (!this._res) return
-    this._res(data)
-    this._res = null
+  get running () {
+    return this._running
   }
 
   async _init () {
@@ -95,6 +106,11 @@ class SLT {
 
     proc.on('exit', () => {
       this._running = false
+      sendRaw('DeleteSceneItem', {
+        scene: this._scene,
+        item: { id: this._itemId },
+      })
+      this.emit('info', { type: 'close' })
       info.delete(pid)
       ports.delete(this._port)
       udpPorts.delete(this._udpPort)
@@ -102,11 +118,19 @@ class SLT {
     })
 
     proc.stderr.on('data', (d) => {
-      const info = d.toString().trim()
-      log('[SRT]', pid, info)
-      // Accepted SRT source connection
-      // SRT source disconnected
-      this._notify({ pid, info })
+      const message = d.toString().trim()
+      let type = null
+      switch (message) {
+        case 'Accepted SRT source connection':
+          type = 'connect'
+          break
+        case 'SRT source disconnected':
+          type = 'disconnect'
+          break
+        default:
+          break
+      }
+      this.emit('info', { type, message })
     })
 
     proc.stdout.on('data', (d) => {
@@ -121,11 +145,12 @@ class SLT {
         recv: parse(recv),
         window: parse(window),
       })
-      this._notify({ pid, ...this._stats })
+      this.emit('stat', this._stats)
     })
 
     this._proc = proc
     this._running = true
+    this._stats.time = 0
     info.set(pid, this)
 
     const { itemId } = await sendRaw('CreateSource', {
@@ -136,45 +161,11 @@ class SLT {
     })
     this._itemId = itemId
 
-    if (!this._sceneProps.bounds) {
-      const { baseWidth, baseHeight } = await sendRaw('GetVideoInfo')
-      this._sceneProps.bounds = {
-        type: scaleType,
-        x: baseWidth,
-        y: baseHeight,
-      }
-    }
+    await setItemProps(this._name, this._scene, this._sceneProps)
+    await setItemZ(itemId, this._sceneZ, this._scene)
 
-    await sendRaw('SetSceneItemProperties', {
-      item: this._name,
-      'scene-name': this._scene,
-      ...this._sceneProps,
-    })
-
-    let sourceList = null
-    const current = await scene()
-    if (current.name !== this._scene) {
-      await scene(this._scene)
-      sourceList = (await scene()).sources
-    } else {
-      sourceList = current.sources
-    }
-
-    const items = sourceList.filter((s) => s.id !== itemId)
-    items.splice(this._sceneZ ?? items.length, 0, { id: itemId })
-    await sendRaw('ReorderSceneItems', { items })
-
-    if (current.name !== this._scene) {
-      await scene(current.name)
-    }
-
+    log('[SRT]', pid, 'port:', this._port)
     return true
-  }
-
-  async * events () {
-    while (this._running) {
-      yield await new Promise((resolve) => { this._res = resolve })
-    }
   }
 
   kill () {
@@ -199,8 +190,32 @@ export const create = async (opts) => {
   return s
 }
 
-export const remove = async (url) => {
+export const listen = async (url, res) => {
   const proc = getProc(url)
-  proc.kill()
-  return { message: 'killed' }
+  const queue = []
+  const notify = () => {
+    if (!res) return
+    res()
+    res = null
+  }
+  let ping = 0
+  proc.on('stat', (stat) => (queue.push(stat), notify()))
+  proc.on('info', (info) => (queue.push(info), notify()))
+  setInterval(() => (++ping, queue.push({ ping }), notify()), 2e4)
+  return async function * () {
+    yield proc.stats
+    while (proc.running) {
+      await new Promise((resolve) => { res = resolve })
+      while (queue.length) yield queue.shift()
+    }
+  }
+}
+
+export const remove = async (url) => {
+  try {
+    getProc(url).kill()
+    return { message: 'killed' }
+  } catch (er) {
+    return { message: er.message }
+  }
 }

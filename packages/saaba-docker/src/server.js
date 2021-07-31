@@ -7,16 +7,13 @@ import { log } from './utils.js'
 
 const version = process.env.npm_package_version || 'debug'
 
-const sockets = new Map()
-
 const updateStats = async (proc) => {
-  for (const send of sockets.values()) send('SrtInit', proc.info)
-  for await (const evt of proc.events()) {
+  proc.on('stats', (s) => {
     // TODO: low bitrate / disconnect handling
 
-    const name = evt.info ? 'SrtInfo' : 'SrtStat'
-    for (const send of sockets.values()) send(name, evt)
-  }
+  })
+  proc.on('info', (i) => {
+  })
 }
 
 export const handler = async (req) => {
@@ -57,9 +54,13 @@ export const handler = async (req) => {
     if (url === '/srt' && isGET) {
       const info = []
       for (const s of srt.info.values()) info.push(s.info)
-      return { info }
+      return {
+        info,
+        ports: [...srt.ports.keys()],
+      }
     }
     try {
+      if (isGET) return await srt.listen(url)
       if (method === 'DELETE') return await srt.remove(url)
       if (method === 'POST') {
         const proc = await srt.create(await body())
@@ -72,40 +73,6 @@ export const handler = async (req) => {
   }
   log('[S] unknown', [method, url])
   throw new NotFoundError(`${url} does not exist`)
-}
-
-export const wsHandler = async (ws, req) => {
-  const remote = req.headers['x-forwarded-for']
-  const send = (messageType, msg) => {
-    try {
-      ws.send(JSON.stringify({ messageType, ...msg }))
-    } catch (er) {
-      log('[WS] error', er)
-    }
-  }
-  let authed = false
-  ws.on('message', async (m) => {
-    const msg = JSON.parse(m)
-    if (msg.messageType === 'Identify' && msg.token === process.env.AUTH_TOKEN) {
-      authed = true
-      send('Identified')
-      sockets.set(remote, send)
-      log('[WS] connected', remote)
-      return
-    }
-    if (!authed) return
-    log('[WS]', remote, msg)
-  })
-  ws.on('close', () => sockets.delete(remote))
-  send('Hello', {
-    version,
-  })
-}
-
-export const onShutdown = async () => {
-  for (const send of sockets.values()) send('Shutdown')
-  log('\n[APP] shutting down...')
-  process.exit(0)
 }
 
 class BadRequestError {
