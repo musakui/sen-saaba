@@ -18,7 +18,7 @@ NAME="musakui/saaba"
 
 docker build \
   --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ') \
-  -f container/Dockerfile
+  -f container/Dockerfile \
   -t ${NAME} -t ${NAME}:$1 .
 
 docker push ${NAME}:latest
