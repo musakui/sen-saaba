@@ -97,6 +97,25 @@ export const handlePOST = async (body) => {
   throw new Error('unknown request')
 }
 
+const connectWS = async () => {
+  while (true) {
+    try {
+      const w = await createOBS('ws://localhost:4444', { password })
+      await new Promise((resolve, reject) => {
+        w.on('open', resolve)
+        w.on('error', reject)
+      })
+      w.on('close', async () => {
+        ws = null
+        ws = await connectWS()
+      })
+      return w
+    } catch (er) {
+      await millis(delay)
+    }
+  }
+}
+
 const init = async () => {
   proc = await run('obs')
   log('[OBS] started')
@@ -104,13 +123,7 @@ const init = async () => {
     log('[OBS] exited. relaunching...')
     launch()
   })
-  await millis(3000)
-  try {
-    ws = await createOBS('ws://localhost:4444', { password })
-  } catch (er) {
-    ws = null
-    return
-  }
+  ws = await connectWS()
   log('[OBS] ws connected')
 }
 
