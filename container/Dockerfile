@@ -58,7 +58,11 @@ RUN npm install -g npm@7
 COPY packages/obs-ws /tmp/obs-ws
 COPY packages/saaba-docker /tmp/app
 WORKDIR /tmp/app
-RUN npm install && npm run build
+RUN npm install \
+ && npm run compress \
+ && mv common.min.js node_modules/pkg/lib-es5/common.js \
+ && mv bootstrap.min.js node_modules/pkg/prelude/bootstrap.js \
+ && npm run build
 
 # build obs
 FROM debian:stable-slim as buildobs

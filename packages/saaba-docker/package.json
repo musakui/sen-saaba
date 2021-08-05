@@ -9,7 +9,9 @@
   "main": "src/index.js",
   "bin": "dist/bundle.js",
   "scripts": {
-    "build": "rollup -c && pkg .",
+    "dev": "rollup --watch -c",
+    "compress": "node ./compressPkg.js",
+    "build": "rollup -c && pkg --compress br .",
     "start": "nodemon -r dotenv/config src/index.js"
   },
   "pkg": {
