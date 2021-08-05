@@ -5,6 +5,9 @@ import { log, run } from './utils.js'
 
 const parse = (obj, f = parseInt) => Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, f(v)]))
 
+const minPort = 1900
+const maxPort = 1999
+
 const srtParams = {
   mode: 'listener',
 }
@@ -46,8 +49,10 @@ let counter = 0
 
 class SLT extends EventEmitter {
   constructor (opts) {
-    const port = opts.port
+    const port = parseInt(opts.port)
+    if (isNaN(port)) throw new Error('invalid port')
     if (ports.has(port)) throw new Error(`port ${port} in use`)
+    if (port < minPort || port > maxPort) throw new Error(`port out of range (${minPort} - ${maxPort})`)
     super()
     this._port = port
     this._name = opts.name || `srt-${++counter}`
