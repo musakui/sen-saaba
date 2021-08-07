@@ -1,7 +1,23 @@
 import { create } from './common.js'
 
+const ONCE = { once: true }
+
 class WS extends WebSocket {
-  on (name, handler) { this.addEventListener(name, handler) }
+  on (name, handler) {
+    this.addEventListener(name, handler)
+  }
+
+  once (name, handler) {
+    this.addEventListener(name, handler, ONCE)
+  }
+
+  off (name, handler) {
+    this.removeEventListener(name, handler)
+  }
+
+  emit (name, detail) {
+    return this.dispatchEvent(new CustomEvent(name, { detail }))
+  }
 }
 
 const parseMessage = (m) => JSON.parse(m.data)

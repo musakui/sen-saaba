@@ -1,6 +1,7 @@
 let curId = 0
 const requests = new Map()
 
+const millis = (delay) => new Promise((resolve) => setTimeout(resolve, delay))
 const camel = ([k, v]) => [k.replace(/-./g, (c) => c[1].toUpperCase()), v]
 const toCamel = (d) => Object.fromEntries(Object.entries(d).map(camel))
 
@@ -18,7 +19,7 @@ export const handleMessage = (msg) => {
     return error ? reject(error) : resolve(toCamel(d))
   }
   // event
-  const evt = { status, messageType: t, error, ...toCamel(d) }
+  return { status, eventType: t, error, ...toCamel(d) }
 }
 
 export const createRequest = (requestType, requestData = {}) => {
@@ -31,7 +32,7 @@ export const createRequest = (requestType, requestData = {}) => {
   const response = new Promise((resolve, reject) => {
     requests.set(requestId, { resolve, reject })
   })
-  return { request, response }
+  return [request, response]
 }
 
 export const create = (env) => {
@@ -49,23 +50,78 @@ export const create = (env) => {
   }
 
   class OBS extends WS {
+    #conn = null
+    #delay = null
+    #running = false
+    #password = null
+    #api = new Proxy({}, {
+      get: (t, p) => t[p] || (t[p] = (q) => this.request(p, q))
+    })
+
+    constructor (url, opts) {
+      super(url)
+      this.#delay = opts.delay || 2000
+      this.#password = opts.password
+      this.#running = true
+      this.#conn = this._init(this)
+    }
+
+    async _init (conn) {
+      while (true) {
+        if (!conn) {
+          conn = new WS(this.url)
+        }
+        try {
+          await new Promise((resolve, reject) => {
+            conn.once('open', resolve)
+            conn.once('error', reject)
+          })
+          break
+        } catch (err) {
+          conn = null
+          await millis(this.#delay)
+        }
+      }
+      conn.once('close', (c) => {
+        this.#conn = null
+      })
+      conn.on('message', (m) => {
+        const evt = handle(m)
+        if (!evt) return
+      })
+
+      // authenticate
+      const [authReq, authResp] = createRequest('GetAuthRequired')
+      conn.send(authReq)
+      const r = await authResp
+      if (r?.authRequired) {
+        const auth = await getAuth(this.#password, r)
+        const [req, res] = createRequest('Authenticate', { auth })
+        conn.send(req)
+        await res
+      }
+
+      this.emit('ready')
+      return conn
+    }
+
+    get $ () {
+      return this.#api
+    }
+
     request (name, params) {
-      const { request, response } = createRequest(name, params)
-      this.send(request)
+      const [request, response] = createRequest(name, params)
+      if (!this.#conn) {
+        this.#conn = this._init()
+      }
+      Promise.resolve(this.#conn).then((c) => c.send(request))
       return response
+    }
+
+    close () {
+      this.#conn.close()
     }
   }
 
-  return async (url, opts = {}) => {
-    const obs = new OBS(url)
-    obs.on('message', (m) => handle(m))
-    obs.on('open', () => {
-      obs.request('GetAuthRequired').then(async (r) => {
-        if (!(r?.authRequired)) return
-        const auth = await getAuth(opts.password, r)
-        obs.request('Authenticate', { auth })
-      })
-    })
-    return obs
-  }
+  return (url, opts = {}) => new OBS(url, opts)
 }

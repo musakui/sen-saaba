@@ -3,7 +3,7 @@ import { createOBS } from 'obs-ws'
 
 import { log, run, millis, readFile } from './utils.js'
 
-const configDir = '.config/obs-studio'
+const configDir = `${process.env.CONFIG_DIR || '.config'}/obs-studio`
 const sceneColleFile = `${configDir}/basic/scenes/default.json`
 
 let defaultSceneColle = '{}'
@@ -52,7 +52,6 @@ export const setDock = (url) => {
 }
 
 export const sendRaw = (name, params) => {
-  if (!ws) return
   return ws.request(name, params)
 }
 
@@ -97,25 +96,6 @@ export const handlePOST = async (body) => {
   throw new Error('unknown request')
 }
 
-const connectWS = async () => {
-  while (true) {
-    try {
-      const w = await createOBS('ws://localhost:4444', { password })
-      await new Promise((resolve, reject) => {
-        w.on('open', resolve)
-        w.on('error', reject)
-      })
-      w.on('close', async () => {
-        ws = null
-        ws = await connectWS()
-      })
-      return w
-    } catch (er) {
-      await millis(delay)
-    }
-  }
-}
-
 const init = async () => {
   proc = await run('obs')
   log('[OBS] started')
@@ -123,10 +103,13 @@ const init = async () => {
     log('[OBS] exited. relaunching...')
     launch()
   })
-  ws = await connectWS()
-  log('[OBS] ws connected')
 }
 
 export const launch = () => setTimeout(init, delay)
 
 init()
+
+ws = createOBS('ws://localhost:4444', { password })
+ws.on('ready', () => {
+  log('[OBS] ws connected')
+})

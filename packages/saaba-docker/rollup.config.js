@@ -19,6 +19,7 @@ export default {
       preventAssignment: true,
       values: {
         'process.env.npm_package_version': `"${version}"`,
+        'process.env.CONFIG_DIR': '""',
       }
     }),
     nodeResolve({
