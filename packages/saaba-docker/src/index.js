@@ -5,7 +5,7 @@ import { log } from './utils.js'
 import { handler } from './server.js'
 
 const app = new EventEmitter()
-const serverError = { error: 'Error', message: 'something went wrong' }
+const serverError = 'something went wrong'
 
 const server = createServer((req, res) => {
   if (req.method === 'POST') {
@@ -26,28 +26,39 @@ const server = createServer((req, res) => {
     }).end(body, 'utf-8')
   }
 
-  const stream = async (gen) => {
+  const end = () => res.end()
+
+  const stream = async (gen, ping = 0) => {
     res.writeHead(200, {
       'content-type': 'application/octet-stream',
     })
-    app.on('stop', () => res.end())
-    for await (const evt of gen()) {
+    const keepalive = setInterval(() => {
+      if (res.socket.readyState === 'closed') {
+        gen.close()
+      } else {
+        res.write(`{"ping":${++ping}}`)
+      }
+    }, 2e4)
+    app.on('stop', end)
+    for await (const evt of gen) {
       res.write(JSON.stringify(evt))
     }
-    res.end()
+    clearInterval(keepalive)
+    app.off('stop', end)
+    end()
   }
 
   handler(req)
     .then((resp) => {
-      if (resp.constructor.name === 'AsyncGeneratorFunction') {
+      if (resp[Symbol.asyncIterator]) {
         stream(resp)
       } else {
         respond(200, resp)
       }
     })
     .catch((err) => {
-      const { httpStatus, ...info } = err
-      respond(httpStatus || 500, httpStatus ? info : serverError)
+      const { httpStatus, message } = err
+      respond(httpStatus || 500, httpStatus ? message : serverError)
     })
 })
 

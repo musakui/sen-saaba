@@ -195,7 +195,7 @@ export const create = async (opts) => {
   return s
 }
 
-export const listen = async (url, res) => {
+export const listen = async (url, res = null, run = true) => {
   const proc = getProc(url)
   const queue = []
   const notify = () => {
@@ -203,16 +203,24 @@ export const listen = async (url, res) => {
     res()
     res = null
   }
-  let ping = 0
-  proc.on('stat', (stat) => (queue.push(stat), notify()))
-  proc.on('info', (info) => (queue.push(info), notify()))
-  setInterval(() => (++ping, queue.push({ ping }), notify()), 2e4)
-  return async function * () {
+  const onEvent = (evt) => (queue.push(evt), notify())
+  proc.on('stat', onEvent)
+  proc.on('info', onEvent)
+  async function * stream () {
     yield proc.stats
-    while (proc.running) {
+    while (run && proc.running) {
       await new Promise((resolve) => { res = resolve })
       while (queue.length) yield queue.shift()
     }
+  }
+  return {
+    [Symbol.asyncIterator]: stream,
+    close: () => {
+      run = false
+      notify()
+      proc.off('stat', onEvent)
+      proc.off('info', onEvent)
+    },
   }
 }
 
