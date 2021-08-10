@@ -32,6 +32,7 @@ const server = createServer((req, res) => {
     res.writeHead(200, {
       'content-type': 'application/octet-stream',
     })
+    res.flushHeaders()
     const keepalive = setInterval(() => {
       if (res.socket.readyState === 'closed') {
         gen.close()

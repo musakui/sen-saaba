@@ -124,6 +124,7 @@ class SLT extends EventEmitter {
 
     proc.stderr.on('data', (d) => {
       const message = d.toString().trim()
+      if (!message) return
       let type = null
       switch (message) {
         case 'Accepted SRT source connection':
