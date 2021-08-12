@@ -1,7 +1,6 @@
 let curId = 0
 const requests = new Map()
 
-const millis = (delay) => new Promise((resolve) => setTimeout(resolve, delay))
 const camel = ([k, v]) => [k.replace(/-./g, (c) => c[1].toUpperCase()), v]
 const toCamel = (d) => Object.fromEntries(Object.entries(d).map(camel))
 
@@ -14,12 +13,12 @@ export const handleMessage = (msg) => {
     ...d
   } = msg
   if (reqId) {
-    const { resolve, reject } = requests.get(reqId)
+    const [resolve, reject] = requests.get(reqId)
     requests.delete(reqId)
     return error ? reject(error) : resolve(toCamel(d))
   }
   // event
-  return { status, eventType: t, error, ...toCamel(d) }
+  return { eventType: t, ...toCamel(d) }
 }
 
 export const createRequest = (requestType, requestData = {}) => {
@@ -29,10 +28,12 @@ export const createRequest = (requestType, requestData = {}) => {
     'message-id': requestId,
     ...requestData
   })
-  const response = new Promise((resolve, reject) => {
-    requests.set(requestId, { resolve, reject })
-  })
-  return [request, response]
+  return [
+    request,
+    new Promise((resolve, reject) => {
+      requests.set(requestId, [resolve, reject])
+    })
+  ]
 }
 
 export const create = (env) => {
@@ -78,13 +79,16 @@ export const create = (env) => {
           })
           break
         } catch (err) {
+          if (conn === this) return (this.#conn = null)
+          await new Promise((resolve) => setTimeout(resolve, this.#delay))
           conn = null
-          await millis(this.#delay)
         }
       }
+
       conn.once('close', (c) => {
         this.#conn = null
       })
+
       conn.on('message', (m) => {
         const evt = handle(m)
         if (!evt) return
