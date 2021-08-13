@@ -1,0 +1,25 @@
+{
+  "name": "saaba-client",
+  "description": "saaba client",
+  "author": "musakui",
+  "license": "MIT",
+  "version": "0.0.1",
+  "private": "true",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "serve": "vite preview"
+  },
+  "dependencies": {
+    "obs-ws": "file:../obs-ws",
+    "vue": "^3.2.2"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^1.4.0",
+    "@vue/compiler-sfc": "^3.2.2",
+    "vite": "^2.4.4",
+    "vite-plugin-windicss": "^1.2.7",
+    "windicss": "^3.1.7"
+  }
+}
