@@ -3,8 +3,6 @@ import * as srt from './srt.js'
 import * as vnc from './vnc.js'
 import * as twitch from './twitch.js'
 
-import { log } from './utils.js'
-
 const version = process.env.npm_package_version || 'debug'
 
 const updateStats = async (proc) => {
@@ -71,27 +69,22 @@ export const handler = async (req) => {
       throw new BadRequestError(err.message)
     }
   }
-  log('[S] unknown', [method, url])
   throw new NotFoundError(`${url} does not exist`)
 }
 
-class BadRequestError {
+class BadRequestError extends Error {
   static code = 400
-  static errorName = 'Bad Request'
+
   constructor (message) {
-    const { code, errorName } = this.constructor
-    this.httpStatus = code
-    this.error = errorName
-    this.message = message
+    super(message)
+    this.httpStatus = this.constructor.code
   }
 }
 
 class ForbiddenError extends BadRequestError {
   static code = 403
-  static errorName = 'Forbidden'
 }
 
 class NotFoundError extends BadRequestError {
   static code = 404
-  static errorName = 'Not Found'
 }

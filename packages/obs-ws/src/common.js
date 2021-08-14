@@ -4,6 +4,9 @@ const requests = new Map()
 const camel = ([k, v]) => [k.replace(/-./g, (c) => c[1].toUpperCase()), v]
 const toCamel = (d) => Object.fromEntries(Object.entries(d).map(camel))
 
+class ObsError extends Error {
+}
+
 export const handleMessage = (msg) => {
   const {
     status,
@@ -15,7 +18,9 @@ export const handleMessage = (msg) => {
   if (reqId) {
     const [resolve, reject] = requests.get(reqId)
     requests.delete(reqId)
-    return error ? reject(error) : resolve(toCamel(d))
+    return error
+      ? reject(new ObsError(error))
+      : resolve(toCamel(d))
   }
   // event
   return { eventType: t, ...toCamel(d) }

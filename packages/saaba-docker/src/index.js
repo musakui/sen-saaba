@@ -74,5 +74,13 @@ export const onShutdown = (sig) => {
 process.on('SIGINT', onShutdown)
 process.on('SIGTERM', onShutdown)
 
+process.on('unhandledRejection', (err) => {
+  throw err
+})
+
+process.on('uncaughtException', (err) => {
+  log('[APP] uncaught', err)
+})
+
 const port = parseInt(process.env.PORT) || 3000
 server.listen(port, () => log('[APP] ready'))

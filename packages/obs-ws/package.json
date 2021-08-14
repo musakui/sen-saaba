@@ -3,7 +3,7 @@
   "description": "OBS WebSocket client",
   "author": "musakui",
   "license": "MIT",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "type": "module",
   "main": "src/index.js",
   "exports": {
@@ -13,6 +13,6 @@
   "scripts": {
   },
   "optionalDependencies": {
-    "ws": "^8.0.0"
+    "ws": "^8.1.0"
   }
 }
