@@ -5,15 +5,6 @@ import * as twitch from './twitch.js'
 
 const version = process.env.npm_package_version || 'debug'
 
-const updateStats = async (proc) => {
-  proc.on('stats', (s) => {
-    // TODO: low bitrate / disconnect handling
-
-  })
-  proc.on('info', (i) => {
-  })
-}
-
 export const handler = async (req) => {
   const { method, body, url } = req
   const isGET = method === 'GET'
@@ -40,6 +31,7 @@ export const handler = async (req) => {
   } else if (url === '/obs') {
     if (isGET) {
       return {
+        dockUrl: await obs.getDock(),
         sceneCollection: await obs.getSceneColle(),
       }
     }
@@ -62,7 +54,6 @@ export const handler = async (req) => {
       if (method === 'DELETE') return await srt.remove(url)
       if (method === 'POST') {
         const proc = await srt.create(await body())
-        updateStats(proc)
         return proc.info
       }
     } catch (err) {

@@ -14,8 +14,8 @@ readFile(sceneColleFile).then((txt) => {
 let proc = null
 let delay = 2000
 
-let ws = null
 const password = process.env.AUTH_TOKEN
+export const ws = createOBS('ws://localhost:4444', { password })
 
 export const kill = () => proc?.kill()
 
@@ -39,6 +39,17 @@ export const setSceneColle = async (data = null) => {
 }
 
 const dockLine = 'ExtraBrowserDocks'
+const dockRegex = new RegExp(`^${dockLine}=(.*)$`, 'm')
+
+export const getDock = async () => {
+  const globalConfig = await readFile(`${configDir}/global.ini`)
+  try {
+    const dockConfig = JSON.parse(dockRegex.exec(globalConfig)[1])
+    return dockConfig[0].url
+  } catch (err) {
+  }
+  return null
+}
 
 export const setDock = (url) => {
   if (!url) return
@@ -51,15 +62,11 @@ export const setDock = (url) => {
   ])
 }
 
-export const sendRaw = (name, params) => {
-  return ws.request(name, params)
-}
-
 export const scene = (name) => name
-  ? sendRaw('SetCurrentScene', { 'scene-name': name })
-  : sendRaw('GetCurrentScene')
+  ? ws.$.SetCurrentScene({ 'scene-name': name })
+  : ws.$.GetCurrentScene()
 
-export const setStreamKey = (key) => sendRaw('SetStreamSettings', {
+export const setStreamKey = (key) => ws.$.SetStreamSettings({
   type: 'rtmp_common',
   settings: { server: 'auto', key },
 })
@@ -73,7 +80,7 @@ export const setItemZ = async (id, z, name) => {
 
   const items = sources.filter((s) => s.id !== id)
   items.splice(z ?? items.length, 0, { id })
-  await sendRaw('ReorderSceneItems', { items })
+  await ws.$.ReorderSceneItems({ items })
 
   if (swap) await scene(current.name)
 }
@@ -82,6 +89,7 @@ export const handlePOST = async (body) => {
   const {
     sceneCollection: colle,
     dock,
+    request,
     restart,
   } = body
   if (colle || (colle === null)) {
@@ -89,6 +97,9 @@ export const handlePOST = async (body) => {
   } else if (dock) {
     await setDock(dock)
     return { message: 'updating dock' }
+  } else if (request) {
+    const response = await ws.request(request, body.params)
+    return { response }
   } else if (restart) {
     kill()
     return { message: 'obs restarting' }
@@ -101,15 +112,12 @@ const init = async () => {
   log('[OBS] started')
   proc.on('close', () => {
     log('[OBS] exited. relaunching...')
-    launch()
+    setTimeout(init, delay)
   })
 }
 
-export const launch = () => setTimeout(init, delay)
-
 init()
 
-ws = createOBS('ws://localhost:4444', { password })
 ws.on('ready', () => {
   log('[OBS] ws connected')
 })

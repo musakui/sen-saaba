@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events'
 
-import { sendRaw, setItemZ } from './obs.js'
+import * as obs from './obs.js'
 import { log, run } from './utils.js'
 
 const parse = (obj, f = parseInt) => Object.fromEntries(Object.entries(obj).map(([k, v]) => [k, f(v)]))
@@ -10,19 +10,6 @@ const maxPort = 1999
 
 const srtParams = {
   mode: 'listener',
-}
-
-const setItemProps = async (item, sceneName, props) => {
-  if (!props.bounds) {
-    const { baseWidth: x, baseHeight: y } = await sendRaw('GetVideoInfo')
-    props.bounds = { type: 'OBS_BOUNDS_SCALE_INNER', x, y }
-  }
-
-  await sendRaw('SetSceneItemProperties', {
-    'scene-name': sceneName,
-    item,
-    ...props,
-  })
 }
 
 const defaultSettings = {
@@ -35,9 +22,9 @@ const defaultSettings = {
 }
 
 export const ports = new Map()
-const udpPorts = new Set()
 export const info = new Map()
 
+const udpPorts = new Set()
 const udpPortStart = 10000
 const getPort = (p = udpPortStart) => {
   while (udpPorts.has(p)) { ++p }
@@ -87,11 +74,14 @@ class SLT extends EventEmitter {
 
   get info () {
     return {
-      itemId: this._itemId,
-      name: this._name,
       port: this._port,
       params: this._params,
       refresh: this._refresh,
+      source: {
+        id: this._itemId,
+        name: this._name,
+        scene: this._scene,
+      },
     }
   }
 
@@ -111,10 +101,7 @@ class SLT extends EventEmitter {
 
     proc.on('exit', () => {
       this._running = false
-      sendRaw('DeleteSceneItem', {
-        scene: this._scene,
-        item: { id: this._itemId },
-      })
+      this.removeSource()
       this.emit('info', { type: 'close' })
       info.delete(pid)
       ports.delete(this._port)
@@ -129,9 +116,11 @@ class SLT extends EventEmitter {
       switch (message) {
         case 'Accepted SRT source connection':
           type = 'connect'
+          this.setProps({ visible: true })
           break
         case 'SRT source disconnected':
           type = 'disconnect'
+          this.setProps({ visible: false })
           break
         default:
           break
@@ -159,19 +148,47 @@ class SLT extends EventEmitter {
     this._stats.time = 0
     info.set(pid, this)
 
-    const { itemId } = await sendRaw('CreateSource', {
+    await this.addSource()
+    log('[SRT]', pid, 'port:', this._port)
+    return true
+  }
+
+  async addSource () {
+    const { itemId } = await obs.ws.$.CreateSource({
       sourceKind: 'ffmpeg_source',
       sourceName: this._name,
       sceneName: this._scene,
       sourceSettings: this._sourceSettings,
+      setVisible: false,
     })
     this._itemId = itemId
 
-    await setItemProps(this._name, this._scene, this._sceneProps)
-    await setItemZ(itemId, this._sceneZ, this._scene)
+    if (!this._sceneProps.bounds) {
+      const info = await obs.ws.$.GetVideoInfo()
+      this._sceneProps.bounds = {
+        type: 'OBS_BOUNDS_SCALE_INNER',
+        x: info.baseWidth,
+        y: info.baseHeight,
+      }
+    }
 
-    log('[SRT]', pid, 'port:', this._port)
-    return true
+    await this.setProps(this._sceneProps)
+    await obs.setItemZ(itemId, this._sceneZ, this._scene)
+  }
+
+  async removeSource () {
+    await obs.ws.$.DeleteSceneItem({
+      scene: this._scene,
+      item: { id: this._itemId },
+    })
+  }
+
+  async setProps (props) {
+    await obs.ws.$.SetSceneItemProperties({
+      'scene-name': this._scene,
+      item: this._name,
+      ...props,
+    })
   }
 
   kill () {

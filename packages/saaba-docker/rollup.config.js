@@ -34,6 +34,7 @@ export default {
     }),
     terser({
       ecma: 2015,
+      keep_classnames: true,
       compress: {
         toplevel: true,
         unsafe_math: true,
