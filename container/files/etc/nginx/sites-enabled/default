@@ -76,3 +76,34 @@ server {
     return 404 '"not found"';
   }
 }
+
+server {
+  listen 3080 default_server;
+
+  location = /token {
+    default_type application/json;
+    include cors.conf;
+    return 200 '"%AUTH_TOKEN%"';
+  }
+
+  location /assets {
+    alias /assets;
+    index index.html;
+  }
+
+  location / {
+    if ($request_method = 'OPTIONS') {
+      add_header 'Access-Control-Allow-Origin' '*' always;
+      add_header 'Access-Control-Allow-Methods' 'GET,POST,DELETE' always;
+      add_header 'Access-Control-Allow-Headers' 'DNT,Keep-Alive,User-Agent,Authorization,Content-Type' always;
+      add_header 'Access-Control-Max-Age' 86400;
+      return 204;
+    }
+
+    include cors.conf;
+    proxy_http_version 1.1;
+    proxy_buffering off;
+    proxy_request_buffering off;
+    proxy_pass http://localhost:3000;
+  }
+}

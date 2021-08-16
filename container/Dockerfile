@@ -151,6 +151,7 @@ COPY --from=buildapp /tmp/app/dist/saaba-docker /usr/bin/saaba
 RUN ldconfig
 
 COPY container/files/etc /etc
+COPY container/files/assets /assets
 COPY container/files/obs-studio /root/.config/obs-studio
 COPY container/files/startup.sh /
 
