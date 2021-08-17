@@ -1,0 +1,23 @@
+{
+  "settings": {
+    "signup": false,
+    "authMethod": "json",
+    "branding": {
+      "name": "saaba",
+      "files": "/root/.config/filebrowser",
+      "disableExternal": true,
+      "theme": "dark"
+    }
+  },
+  "server": {
+    "baseURL": "/fs",
+    "root": "/assets",
+    "enableThumbnails": false,
+    "resizePreview": false,
+    "address": "0.0.0.0",
+    "port": "6000"
+  },
+  "auther": {
+    "recaptcha": null
+  }
+}

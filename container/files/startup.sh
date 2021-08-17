@@ -26,6 +26,11 @@ echo -n "."
 
 unset WS_SALT
 
+filebrowser config init >/dev/null
+filebrowser config import .config/filebrowser/settings.json >/dev/null
+filebrowser users add user ${AUTH_TOKEN} >/dev/null
+echo -n "."
+
 if [ -n "$CERT_URL" ]; then
   FULC="$(echo | openssl s_client -showcerts -verify 5 -connect "${CERT_URL}:443" 2>/dev/null)"
   echo "${FULC}" | sed -ne '/-BEGIN CERTIFICATE-/,/-END CERTIFICATE-/p' >> /etc/nginx/ssl/nginx.crt
@@ -47,6 +52,9 @@ nginx -c /etc/nginx/nginx.conf
 echo -n "."
 
 Xvfb :1 -screen 0 ${RESOLUTION:-960x720}x24 &
+echo -n "."
+
+filebrowser 2>/dev/null &
 echo -n "."
 
 echo " OK"

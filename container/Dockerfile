@@ -143,6 +143,8 @@ RUN apt-get update \
       libqt5core5a libqt5gui5 libqt5svg5 libqt5xml5 libqt5widgets5 libqt5x11extras5 \
  && rm -rf /var/lib/apt/lists/* /var/cache/apt/*
 
+RUN curl -fsSL https://raw.githubusercontent.com/filebrowser/get/master/get.sh | bash
+
 COPY --from=buildobs /built/usr /usr
 COPY --from=buildsrt /tmp/srt/srt-live-transmit /usr/bin/slt
 COPY --from=buildvnc /tmp/build/libvnc* /usr/lib/x86_64-linux-gnu/
@@ -153,6 +155,7 @@ RUN ldconfig
 COPY container/files/etc /etc
 COPY container/files/assets /assets
 COPY container/files/obs-studio /root/.config/obs-studio
+COPY container/files/filebrowser /root/.config/filebrowser
 COPY container/files/startup.sh /
 
 WORKDIR /root

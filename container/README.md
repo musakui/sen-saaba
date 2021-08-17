@@ -33,6 +33,7 @@ The final container uses `nginx` to route external traffic
 | endpoint | description     | notes               |
 |----------|-----------------|---------------------|
 | `/`      | Healthcheck     | Just returns `"ok"` |
+| `/fs`    | [filebrowser](https://github.com/filebrowser/filebrowser) | |
 | `/api`   | [Main API](../packages/saaba-docker)  | Requires Authorization (`AUTH_TOKEN`) |
 | `/obs`   | [OBS WebSocket](https://github.com/Palakis/obs-websocket) | |
 | `/vnc`   | [VNC WebSocket](https://github.com/LibVNC/x11vnc)         | Connect with a client like [noVNC](https://github.com/novnc/noVNC) |
