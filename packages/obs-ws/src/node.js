@@ -1,5 +1,5 @@
 import { createHash } from 'crypto'
-import WS from 'ws'
+import { WebSocket as WS } from 'ws'
 
 import { create } from './common.js'
 

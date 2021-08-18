@@ -13,6 +13,6 @@
   "scripts": {
   },
   "optionalDependencies": {
-    "ws": "^8.1.0"
+    "ws": "^8.2.0"
   }
 }
