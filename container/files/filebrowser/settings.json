@@ -2,6 +2,17 @@
   "settings": {
     "signup": false,
     "authMethod": "json",
+    "defaults": {
+      "perm": {
+        "create": true,
+        "rename": true,
+        "modify": true,
+        "delete": true,
+        "download": true,
+        "execute": false,
+        "admin": false
+      }
+    },
     "branding": {
       "name": "saaba",
       "files": "/root/.config/filebrowser",
