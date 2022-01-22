@@ -25,7 +25,7 @@
     "@google-cloud/firestore": "^4.13.2",
     "@google-cloud/functions-framework": "^1.9.0",
     "@google-cloud/secret-manager": "^3.8.0",
-    "node-fetch": "^2.6.1"
+    "node-fetch": "^3.1.1"
   },
   "devDependencies": {
     "@rollup/plugin-node-resolve": "^13.0.2",
